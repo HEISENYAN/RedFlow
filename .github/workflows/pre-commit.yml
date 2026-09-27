@@ -1,0 +1,24 @@
+name: Source checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check public source
+        run: python scripts/prepare_public_release.py --check
+      - name: Install static checker
+        run: python -m pip install ruff==0.8.6
+      - name: Check syntax and undefined names
+        run: ruff check --select E9,F63,F7,F82 --ignore F722 src scripts packages tests

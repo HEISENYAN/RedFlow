@@ -1,0 +1,165 @@
+[project]
+name = "openpi"
+version = "0.1.0"
+description = "RedFlow real-robot offline fine-tuning, built on openpi"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+# Core dependencies: upper bounds prevent excessive dependency resolution depth.
+dependencies = [
+    # Data augmentation & robotics
+    "datasets>=3.0.0,<4.0.0",
+    "chex==0.1.90",
+    "augmax>=0.3.4,<0.4.0",
+    "dm-tree>=0.1.8,<0.2.0",
+    "gym-aloha>=0.1.1,<0.2.0",
+    "av==14.2.0",
+    # Core utilities
+    "einops>=0.8.0,<0.9.0",
+    "numpy>=1.22.4,<2.0.0",
+    "numpydantic>=1.6.6,<2.0.0",
+    "pillow>=11.0.0,<12.0.0",
+    "imageio>=2.36.1,<3.0.0",
+    "opencv-python>=4.10.0.84,<5.0.0",
+    "sentencepiece>=0.2.0,<0.3.0",
+    "filelock>=3.16.1,<4.0.0",
+    "typing-extensions>=4.12.2,<5.0.0",
+    "flatbuffers>=24.3.25,<25.0.0",
+    
+    # JAX / Flax ecosystem (tight minor bounds)
+    "jax[cuda12]==0.5.3",
+    "flax==0.10.2",
+    "orbax-checkpoint==0.11.13",
+    "jaxtyping==0.2.36",
+    "beartype==0.19.0",
+    "equinox>=0.11.8,<0.12.0",
+    "treescope>=0.1.7,<0.2.0",
+    "ml_collections==1.0.0",
+    
+    # PyTorch / Transformers (pinned or tight bounds)
+    "transformers==4.53.2",
+    
+    # Google Cloud / fsspec stack (narrow bounds to avoid resolution loops)
+    "fsspec[gcs]>=2024.6.0,<2024.12.0",
+    "polars>=1.30.0,<2.0.0",
+    
+    # CLI / logging / config
+    "tyro>=0.9.5,<0.10.0",
+    "rich>=14.0.0,<15.0.0",
+    "tqdm-loggable>=0.2,<0.3.0",
+    "wandb>=0.19.1,<1.0.0",
+    
+    # Key transitive dependencies: explicit bounds reduce pip resolver backtracking.
+    # Versions are based on the resolved uv.lock dependencies.
+    "huggingface-hub>=0.32.0,<1.0.0",
+    "torch>=2.7.0,<2.8.0",
+    "safetensors>=0.5.3,<0.6.0",
+    "tokenizers>=0.21.0,<0.22.0",
+    "pyarrow>=20.0.0,<21.0.0",
+    "protobuf>=4.25.0,<5.0.0",
+    "grpcio>=1.73.0,<2.0.0",
+    "scipy>=1.15.0,<1.16.0",
+    "aiohttp>=3.12.0,<4.0.0",
+    "requests>=2.32.0,<3.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+    "setuptools>=80.0.0,<81.0.0",
+    "packaging>=25.0,<26.0",
+
+    # Git/local dependencies: pip-compatible PEP 508 references, overridden by [tool.uv.sources] in uv.
+    "lerobot @ git+https://github.com/huggingface/lerobot@33cad37054c2b594ceba57463e8f11ee374fa93c",
+    "openpi-client",
+]
+
+[project.urls]
+Upstream = "https://github.com/Physical-Intelligence/openpi"
+
+# Development dependencies with upper bounds.
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4,<9.0.0",
+    "ruff>=0.8.6,<0.9.0",
+    "pre-commit>=4.0.1,<5.0.0",
+    "ipykernel>=6.29.5,<7.0.0",
+    "ipywidgets>=8.1.5,<9.0.0",
+    "matplotlib>=3.10.0,<4.0.0",
+    "pynvml>=12.0.0,<13.0.0",
+]
+
+# Optional QwenVL training/evaluation dependencies reuse the main torch/transformers versions.
+# Do not add conflicting version constraints from a separate requirements-qwenvl.txt.
+qwenvl = [
+    "torchvision>=0.22.0,<0.23.0",
+    "torchaudio>=2.7.0,<2.8.0",
+    "torchcodec>=0.4.0,<0.5.0",
+    "triton>=3.3.0,<3.4.0",
+    "deepspeed==0.17.1",
+    "accelerate==1.7.0",
+    "tf-keras>=2.15.0,<3.0.0",
+    "tensorboard>=2.15.0,<3.0.0",
+    "h5py>=3.11.0,<4.0.0",
+    "mpi4py>=4.0.0,<5.0.0",
+]
+
+# RLDS dependencies: TensorFlow is pinned; dlimp uses a Git source.
+rlds = [
+    "dlimp @ git+https://github.com/kvablack/dlimp@ad72ce3a9b414db2185bc0b38461d4101a65477a",
+    "tensorflow-cpu==2.15.0",
+    "tensorflow-datasets==4.9.9",
+]
+
+[tool.uv]
+# Compatibility overrides for key packages.
+default-groups = ["dev"]
+override-dependencies = ["ml-dtypes==0.4.1", "tensorstore==0.1.74"]
+
+# Git sources are pinned to commit hashes for reproducibility.
+[tool.uv.sources]
+openpi-client = { workspace = true }
+lerobot = { git = "https://github.com/huggingface/lerobot", rev = "33cad37054c2b594ceba57463e8f11ee374fa93c" }
+dlimp = { git = "https://github.com/kvablack/dlimp", rev = "ad72ce3a9b414db2185bc0b38461d4101a65477a" }
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+# ========== Tool configuration ==========
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["docker", "third_party", "src/openpi/models_pytorch/transformers_replace/*"]
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules/  
+select = [
+    "B", "C4", "DTZ", "E4", "E7", "E9", "F", "FBT", "FURB", "I", "ICN", "ISC",
+    "LOG", "N", "PD", "PERF", "PIE", "PLC", "PLE", "PLR1", "PLR5", "PLW", "PT",
+    "Q", "RET", "RUF", "SIM", "SLF", "T10", "T20", "UP", "W",
+]
+ignore = [
+    "F722",   # Conflicts with array typing.
+    "T201",   # We use print statements.
+    "PD008",  # Lots of false positives.
+    "ISC001", # Disabling to support ruff format.
+    "LOG015", # Use logger.info.
+]
+unfixable = [
+    "B905", # Fix defaults to strict=False, which is not what we want.
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+force-sort-within-sections = true
+single-line-exclusions = ["collections.abc", "typing", "typing_extensions"]
+known-third-party = ["wandb"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+markers = ["manual: should be run manually."]
+testpaths = ["src", "scripts", "packages"]
